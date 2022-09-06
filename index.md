@@ -40,7 +40,7 @@ The idea is to sample a dataset with replacement to estimate quantities about th
 First create the initial loop for the total number of samples to create your distribution. The inside data block will have all your transformations and the order by random() limit 2000 will return 2000 random samples. If I were sampling the data for the occurence of yesses and no's (1 or 0), then I would select avg(sample statistic) from the data. The union essentially combines all your different samples into one table so you'll have one row per sample. Pretty neat, eh?
 
 ```
-{% for num in range(1,100) %}
+ for num in range(1,100) 
 
     (
         with data as (
@@ -51,7 +51,9 @@ First create the initial loop for the total number of samples to create your dis
         select sample statistic from data
     )
 
-{% if not loop.last %} union {% endif %}
+    if not loop.last union endif 
+ 
+ end for 
 ```
     
 By performing this in DBT, I was able to get this up and running fairly quickly with our existing data warehouse without having to implement this in python and dealing with queries there.
