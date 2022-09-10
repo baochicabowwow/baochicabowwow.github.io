@@ -2,7 +2,7 @@
 layout: default
 ---
 
-# Jupyter Notebooks and Snowflake Connector using Docker
+## Jupyter Notebooks and Snowflake Connector using Docker
 
 I ran into an issue the other day where folks couldn't get their environments working properly to run my jupyter notebooks with Snowflake. Surprisingly, it's relatively simple to run jupyter notebooks with the snowflake connector using Docker.
 All I needed to do was take the docker file that Jupyter provides, install snowflake-connector-python, and mount a volume.
@@ -58,7 +58,7 @@ First create the initial loop for the total number of samples to create your dis
     
 By performing this in DBT, I was able to get this up and running fairly quickly with our existing data warehouse without having to implement this in python and dealing with queries there.
 
-### Pattern Matching in Snowflake
+## Pattern Matching in Snowflake
 
 Snowflake recently released their version of pattern matching which lets users query for rows that match a pattern much like regex. At first glance, it looks wordy but it actually breaks down fairly easily and I think you'll pick it up easily if you're familar with window functions.
 
