@@ -2,6 +2,64 @@
 layout: default
 ---
 
+## Running Python Faster with Cython
+
+I'm currently reading _High Performance Python by Micha Gorelick & Ian Ozsvald_ and it's been really eye opening how quickly and _easily_ you could speed up CPU intensive operations within Python using Cython. In this example, I'm going to calculate the powers of 5 million random numbers. This will demonstrate how easily it was to speed up this code and how much quicker it ran using Cython. I'll be using Cython and `line profiler` in these examples. 
+
+This is our baseline example. 
+
+Runtime: 11.9378s
+`main_func.py`
+
+```python
+import random
+
+@profile
+def total_of_pwrs(input_list):
+    total = 0 
+    for i in range(len(input_list)):
+        total += calc_power_of(input_list[i])
+    return total 
+
+def calc_power_of(num):
+    if num <= 5:
+        # return num squared
+        return pow(num,2)
+    else: 
+        # return num cubed
+        return pow(num,3)
+
+if __name__ == "__main__":
+    randomlist = [random.randrange(1, 10) for i in range(5_000_000)]
+    total = total_of_pwrs(randomlist)
+    print(total)
+```
+
+The next step is to move `calc_power_of` into cython_calc.pyx file and compile the extension module using a setup.py file. The compiled version of `calc_power_of` will be imported into the `main_func.py`. I haven't done anything to `calc_power_of` inside of cython_calc.pyx yet - let's see how that performs. 
+
+Runtime: 8.03s
+```python 
+def total_of_pwrs(input_list):
+    total = 0 
+    for i in range(len(input_list)):
+        total += cython_calc.calc_power_of(input_list[i])
+    return total
+```
+
+Now, let's add types. 
+
+Runtime: 6.98486s
+```python
+cpdef int calc_power_of(int num):
+    if num <= 5:
+        # return num squared
+        return pow(num,2)
+    else: 
+        # return num cubed
+        return pow(num,3)
+```
+This little amount work resulted in almost 40% reduction in execution time. 
+
 ## Jupyter Notebooks and Snowflake Connector using Docker
 
 I ran into an issue the other day where folks couldn't get their environments working properly to run my jupyter notebooks with Snowflake. Surprisingly, it's relatively simple to run jupyter notebooks with the snowflake connector using Docker.
