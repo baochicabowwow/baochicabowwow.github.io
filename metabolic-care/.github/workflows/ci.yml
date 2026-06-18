@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, claude/baby-care-tracking-app-8kjbp2]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Typecheck, Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: metabolic-care
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: metabolic-care/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test -- --passWithNoTests
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: placeholder

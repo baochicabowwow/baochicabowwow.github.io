@@ -1,0 +1,19 @@
+name,brand,lysine_mg_per_100g,protein_g_per_100g,energy_kcal_per_100g,default_serving_g
+Chicken breast cooked,,2800,31,165,85
+Salmon cooked,,2700,25,208,85
+Whole milk,,260,3.3,61,240
+White rice cooked,,100,2.7,130,100
+White bread,,170,9,265,28
+Apple raw,,16,0.3,52,182
+Egg hard-boiled,,900,13,155,50
+Banana raw,,60,1.1,89,118
+Oats cooked,,88,2.5,71,234
+Sweet potato cooked,,55,2,90,100
+Tofu firm,,515,8.1,76,85
+Lentils cooked,,630,9,116,100
+Greek yogurt plain,Generic,520,10,97,170
+Peas cooked,,315,5,81,100
+Corn cooked,,40,3.3,96,100
+Carrot raw,,46,0.9,41,100
+Broccoli cooked,,180,2.8,35,100
+Formula for PDE,HCU Express,0,13,450,30
