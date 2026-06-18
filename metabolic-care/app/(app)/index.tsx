@@ -5,10 +5,12 @@ import { Screen, Card, Text, Button, colors, spacing } from '../../src/component
 import { useAuth } from '../../src/features/auth/AuthContext';
 import { useChildren } from '../../src/features/children/useChildren';
 import { useNutrientTargets } from '../../src/features/children/useNutrientTargets';
-import { useTodayIntake } from '../../src/features/analytics/useDailyIntake';
+import { useTodayAllIntake } from '../../src/features/analytics/useDailyIntake';
 import { useTodayMeals } from '../../src/features/diet/useMeals';
 import { DailyNutrientSummary } from '../../src/components/DailyNutrientSummary';
-import type { Child } from '../../src/lib/database.types';
+import { getNutrientDisplayName, getNutrientUnit } from '../../src/lib/diseaseProfiles';
+import type { Child, ChildNutrientTarget, DailyNutrientIntake, MealItem } from '../../src/lib/database.types';
+import type { FoodWithNutrients } from '../../src/features/diet/useFoods';
 
 export default function TodayScreen() {
   const { primaryCircle } = useAuth();
@@ -18,25 +20,26 @@ export default function TodayScreen() {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
   const activeChildId = selectedChildId ?? children?.[0]?.id;
+  const activeChild = children?.find((c: Child) => c.id === activeChildId);
+
   const { data: targets } = useNutrientTargets(activeChildId);
-  const { data: todayIntake, refetch: refetchIntake } = useTodayIntake(activeChildId, 'lysine');
+  const { data: allIntake, refetch: refetchIntake } = useTodayAllIntake(activeChildId);
   const { data: todayMeals, refetch: refetchMeals } = useTodayMeals(activeChildId);
-
-  const lysineTarget = targets?.find((t) => t.nutrient_key === 'lysine');
-  const activeChild = children?.find((c) => c.id === activeChildId);
-
-  function getEffectiveLimit() {
-    if (!lysineTarget || !activeChild) return null;
-    if (lysineTarget.basis === 'per_kg') {
-      if (!lysineTarget.per_kg_amount || !activeChild.weight_kg) return null;
-      return lysineTarget.per_kg_amount * activeChild.weight_kg;
-    }
-    return lysineTarget.daily_limit_amount ?? null;
-  }
 
   async function handleRefresh() {
     await Promise.all([refetch(), refetchIntake(), refetchMeals()]);
   }
+
+  function getEffectiveLimit(target: { basis: string; per_kg_amount: number | null; daily_limit_amount: number | null }) {
+    if (target.basis === 'per_kg') {
+      if (!target.per_kg_amount || !activeChild?.weight_kg) return null;
+      return target.per_kg_amount * activeChild.weight_kg;
+    }
+    return target.daily_limit_amount ?? null;
+  }
+
+  // Nutrient keys the child has targets for (to show in meal items)
+  const trackedKeys = targets?.map((t: ChildNutrientTarget) => t.nutrient_key) ?? [];
 
   if (!primaryCircle) {
     return (
@@ -88,14 +91,36 @@ export default function TodayScreen() {
               </View>
             )}
 
-            {/* Lysine summary */}
-            {activeChildId && (
-              <DailyNutrientSummary
-                nutrientLabel="Lysine"
-                unit="mg"
-                consumed={todayIntake?.total_amount ?? 0}
-                limit={getEffectiveLimit()}
-              />
+            {/* Per-target nutrient summary cards */}
+            {activeChildId && targets && targets.length > 0 && targets.map((target: ChildNutrientTarget) => {
+              const intake = allIntake?.find((i: DailyNutrientIntake) => i.nutrient_key === target.nutrient_key);
+              const limit = getEffectiveLimit(target);
+              return (
+                <DailyNutrientSummary
+                  key={target.nutrient_key}
+                  nutrientLabel={target.nutrient_key}
+                  unit={getNutrientUnit(target.nutrient_key)}
+                  consumed={intake?.total_amount ?? 0}
+                  limit={limit}
+                  limitType={(target.limit_type as 'upper' | 'lower') ?? 'upper'}
+                />
+              );
+            })}
+
+            {/* Prompt to set targets if none exist */}
+            {activeChildId && targets && targets.length === 0 && (
+              <Card style={styles.noTargetCard}>
+                <Text variant="body" color={colors.textSecondary}>
+                  No nutrient limits set for {activeChild?.name}.
+                </Text>
+                <Button
+                  title="Set limits"
+                  size="sm"
+                  variant="secondary"
+                  style={{ marginTop: spacing.sm }}
+                  onPress={() => router.push(`/(app)/children/${activeChildId}`)}
+                />
+              </Card>
             )}
 
             {/* Add meal CTA */}
@@ -134,17 +159,22 @@ export default function TodayScreen() {
                 {new Date(meal.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </View>
-            {meal.meal_items.map((item) => {
-              const lysine = (item.computed_nutrients as Record<string, number>)['lysine_mg'];
+            {meal.meal_items.map((item: MealItem & { food: FoodWithNutrients }) => {
+              const nutrients = item.computed_nutrients as Record<string, number>;
+              // Show the first tracked nutrient's value, falling back to lysine_mg
+              const trackedKey = trackedKeys.find((k: string) => nutrients[`${k}_mg`] != null || nutrients[`${k}_g`] != null);
+              const displayKey = trackedKey ? `${trackedKey}_mg` : 'lysine_mg';
+              const trackedUnit = trackedKey ? getNutrientUnit(trackedKey) : 'mg';
+              const trackedAmount = nutrients[displayKey] ?? nutrients[`${trackedKey}_g`];
               return (
                 <View key={item.id} style={styles.mealItem}>
                   <Text variant="body" style={{ flex: 1 }}>{item.food?.name}</Text>
                   <Text variant="bodySmall" color={colors.textSecondary}>
                     {item.amount_grams}g
                   </Text>
-                  {lysine != null && (
+                  {trackedAmount != null && (
                     <Text variant="bodySmall" color={colors.primary} style={styles.nutrientBadge}>
-                      {Math.round(lysine)} mg
+                      {Math.round(trackedAmount)} {trackedUnit}
                     </Text>
                   )}
                 </View>
@@ -153,11 +183,20 @@ export default function TodayScreen() {
           </Card>
         )}
         ListEmptyComponent={
-          <Card style={styles.emptyMeals}>
-            <Text variant="body" color={colors.textSecondary} style={{ textAlign: 'center' }}>
-              No meals logged today
-            </Text>
-          </Card>
+          activeChildId ? (
+            <Card style={styles.emptyMeals}>
+              <Text variant="body" color={colors.textSecondary} style={{ textAlign: 'center' }}>
+                No meals logged today
+              </Text>
+              <Button
+                title="Log first meal"
+                size="sm"
+                variant="secondary"
+                style={{ marginTop: spacing.sm }}
+                onPress={() => router.push('/(app)/diet/log')}
+              />
+            </Card>
+          ) : null
         }
         contentContainerStyle={styles.list}
       />
@@ -185,6 +224,7 @@ const styles = StyleSheet.create({
   mealItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
   nutrientBadge: { fontWeight: '600' },
   noChildCard: { alignItems: 'center' },
+  noTargetCard: { alignItems: 'center', backgroundColor: colors.surfaceAlt },
   emptyMeals: { alignItems: 'center', padding: spacing.xl },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
   emptyText: { textAlign: 'center' },

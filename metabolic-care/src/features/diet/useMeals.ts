@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { calculateItemNutrients } from '../../domain/nutrition/calculations';
-import type { Meal, MealItem } from '../../lib/database.types';
+import type { Meal, MealItem, Json } from '../../lib/database.types';
 import type { FoodWithNutrients } from './useFoods';
 
 export type MealWithItems = Meal & {
@@ -28,7 +28,7 @@ export function useTodayMeals(childId: string | undefined) {
         .lte('logged_at', `${today}T23:59:59`)
         .order('logged_at', { ascending: false });
       if (error) throw error;
-      return data as MealWithItems[];
+      return data as unknown as MealWithItems[];
     },
   });
 }
@@ -72,7 +72,7 @@ export function useLogMeal() {
               })),
             },
             item.amount_grams,
-          ),
+          ) as unknown as Json,
         }));
 
         const { error: itemsError } = await supabase.from('meal_items').insert(mealItems);
@@ -84,6 +84,27 @@ export function useLogMeal() {
     onSuccess: (meal) => {
       qc.invalidateQueries({ queryKey: ['meals', 'today', meal.child_id] });
       qc.invalidateQueries({ queryKey: ['daily-intake', meal.child_id] });
+    },
+  });
+}
+
+export function useRecentMeals(childId: string | undefined) {
+  return useQuery({
+    queryKey: ['meals', 'recent', childId],
+    enabled: !!childId,
+    staleTime: 1000 * 60 * 5,
+    queryFn: async () => {
+      const since = new Date();
+      since.setDate(since.getDate() - 30);
+      const { data, error } = await supabase
+        .from('meals')
+        .select('*, meal_items(*, food:foods(*, food_nutrients(*), food_servings(*)))')
+        .eq('child_id', childId!)
+        .gte('logged_at', since.toISOString())
+        .order('logged_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data as unknown as MealWithItems[];
     },
   });
 }

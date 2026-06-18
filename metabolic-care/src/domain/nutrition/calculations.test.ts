@@ -6,7 +6,7 @@ import {
   percentOfLimit,
   gramsFromServing,
 } from './calculations';
-import type { Food, NutrientTarget, Child } from './types';
+import type { Food, NutrientTarget, Child, ComputedNutrients } from './types';
 
 const chickenBreast: Food = {
   id: 'f1',
@@ -146,7 +146,7 @@ describe('sumNutrients', () => {
   });
 
   it('handles items with different/disjoint nutrient keys', () => {
-    const items = [{ lysine_mg: 100 }, { protein_g: 5 }];
+    const items = [{ lysine_mg: 100 }, { protein_g: 5 }] as ComputedNutrients[];
     const sum = sumNutrients(items);
     expect(sum.lysine_mg).toBe(100);
     expect(sum.protein_g).toBe(5);

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import type { CircleMember, CircleInvite, MemberPermissions } from '../../lib/database.types';
+import type { CircleMember, CircleInvite, MemberPermissions, Json } from '../../lib/database.types';
 
 export type CircleMemberWithProfile = CircleMember & {
   profile: { display_name: string; avatar_url: string | null };
@@ -18,7 +18,7 @@ export function useCircleMembers(careCircleId: string | undefined) {
         .eq('status', 'active')
         .order('role');
       if (error) throw error;
-      return data as CircleMemberWithProfile[];
+      return data as unknown as CircleMemberWithProfile[];
     },
   });
 }
@@ -33,9 +33,17 @@ export function useInviteMember() {
       permissions: MemberPermissions;
       created_by: string;
     }) => {
+      const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from('circle_invites')
-        .insert(input)
+        .insert({
+          care_circle_id: input.care_circle_id,
+          email: input.email,
+          role: input.role,
+          created_by: input.created_by,
+          expires_at,
+          permissions: input.permissions as unknown as Json,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -61,7 +69,7 @@ export function useUpdateMemberPermissions() {
     }) => {
       const { data, error } = await supabase
         .from('circle_members')
-        .update({ permissions })
+        .update({ permissions: permissions as unknown as Json })
         .eq('id', memberId)
         .select()
         .single();

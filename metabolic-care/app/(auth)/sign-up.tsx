@@ -57,15 +57,15 @@ export default function SignUp() {
         await supabase.from('circle_members').insert({
           care_circle_id: circle.id,
           user_id: data.user.id,
-          role: 'primary',
-          status: 'active',
+          role: 'primary' as const,
+          status: 'active' as const,
           permissions: {
             can_log: true,
             can_view_analytics: true,
             can_edit_targets: true,
             can_manage_members: true,
             can_edit_foods: true,
-          },
+          } as unknown as import('../../src/lib/database.types').Json,
         });
       }
     }

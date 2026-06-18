@@ -12,6 +12,7 @@ const UNIT_SUFFIX: Record<string, string> = {
   leucine: '_mg',
   isoleucine: '_mg',
   valine: '_mg',
+  methionine: '_mg',
 };
 
 export function nutrientResultKey(nutrientKey: string): string {

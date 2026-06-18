@@ -19,6 +19,7 @@ export type ComputedNutrients = Record<string, number>;
 export interface NutrientTarget {
   nutrient_key: NutrientKey;
   basis: 'absolute' | 'per_kg';
+  limit_type?: 'upper' | 'lower';
   daily_limit_amount?: number | null;
   per_kg_amount?: number | null;
 }
@@ -33,6 +34,7 @@ export interface DailyIntakeSummary {
   nutrient_key: NutrientKey;
   total_amount: number;
   effective_limit?: number | null;
+  limit_type?: 'upper' | 'lower' | null;
   percent_of_limit?: number | null;
   within_limit?: boolean | null;
 }

@@ -66,8 +66,8 @@ export default function FoodSearchScreen() {
           data={results}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
-            const lysine = item.food_nutrients.find((n) => n.nutrient_key === 'lysine');
-            const protein = item.food_nutrients.find((n) => n.nutrient_key === 'protein');
+            const lysine = item.food_nutrients.find((n: { nutrient_key: string; amount_per_100g: number }) => n.nutrient_key === 'lysine');
+            const protein = item.food_nutrients.find((n: { nutrient_key: string; amount_per_100g: number }) => n.nutrient_key === 'protein');
             return (
               <Card style={styles.foodCard}>
                 <View style={styles.foodRow}>

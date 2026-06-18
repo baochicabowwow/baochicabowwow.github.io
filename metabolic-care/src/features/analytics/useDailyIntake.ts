@@ -46,3 +46,20 @@ export function useTodayIntake(childId: string | undefined, nutrientKey: string 
     },
   });
 }
+
+export function useTodayAllIntake(childId: string | undefined) {
+  const today = new Date().toISOString().slice(0, 10);
+  return useQuery({
+    queryKey: ['daily-intake', childId, 'all', 'today'],
+    enabled: !!childId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('daily_nutrient_intake')
+        .select('*')
+        .eq('child_id', childId!)
+        .eq('log_date', today);
+      if (error) throw error;
+      return data as DailyNutrientIntake[];
+    },
+  });
+}

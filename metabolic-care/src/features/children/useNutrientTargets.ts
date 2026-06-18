@@ -32,6 +32,7 @@ interface UpsertTargetInput {
   child_id: string;
   nutrient_key: string;
   basis: 'absolute' | 'per_kg';
+  limit_type: 'upper' | 'lower';
   daily_limit_amount?: number | null;
   per_kg_amount?: number | null;
   set_by: string;

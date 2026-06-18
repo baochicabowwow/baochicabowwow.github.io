@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Screen, Card, Text, Button, colors, spacing } from '../../../src/components/ui';
 import { useAuth } from '../../../src/features/auth/AuthContext';
 import { useChildren } from '../../../src/features/children/useChildren';
 import { useTrackerEvents, useLogTrackerEvent } from '../../../src/features/trackers/useTrackerEvents';
+import type { TrackerEvent } from '../../../src/lib/database.types';
 import { Ionicons } from '@expo/vector-icons';
 
 type TrackerType = 'diaper' | 'medicine' | 'activity';
@@ -24,6 +26,7 @@ const TRACKERS: TrackerDefinition[] = [
 
 export default function TrackersScreen() {
   const { primaryCircle, user } = useAuth();
+  const router = useRouter();
   const { data: children } = useChildren(primaryCircle?.id);
   const activeChildId = children?.[0]?.id;
   const logEvent = useLogTrackerEvent();
@@ -42,9 +45,17 @@ export default function TrackersScreen() {
 
   return (
     <Screen>
-      <Text variant="h2" style={styles.heading}>Trackers</Text>
+      <View style={styles.headerRow}>
+        <Text variant="h2">Trackers</Text>
+        <Button
+          title="Medications"
+          size="sm"
+          variant="secondary"
+          onPress={() => router.push('/(app)/trackers/medications')}
+        />
+      </View>
       <Text variant="bodySmall" color={colors.textSecondary} style={styles.subtitle}>
-        Quick-log diapers, medicine, and activities. Full detail screens coming soon.
+        Quick-log diapers and activities. Manage medications for dose logging.
       </Text>
 
       {/* Quick-log buttons */}
@@ -66,7 +77,7 @@ export default function TrackersScreen() {
       {/* Recent events */}
       <Text variant="h3" style={styles.recentHeading}>Recent</Text>
       {recentEvents?.length ? (
-        recentEvents.map((event) => {
+        recentEvents.map((event: TrackerEvent) => {
           const tracker = TRACKERS.find((t) => t.type === event.type);
           return (
             <Card key={event.id} style={styles.eventCard}>
@@ -96,6 +107,7 @@ export default function TrackersScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
   heading: { marginBottom: spacing.xs },
   subtitle: { marginBottom: spacing.lg },
   grid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },

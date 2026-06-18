@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import type { TrackerEvent } from '../../lib/database.types';
+import type { TrackerEvent, Json } from '../../lib/database.types';
 
 export function useTrackerEvents(
   childId: string | undefined,
@@ -42,7 +42,7 @@ export function useLogTrackerEvent() {
         .from('tracker_events')
         .insert({
           ...input,
-          data: data ?? {},
+          data: (data ?? {}) as unknown as Json,
           occurred_at: input.occurred_at ?? new Date().toISOString(),
         })
         .select()

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import type { MemberPermissions } from '../../../src/lib/database.types';
+import type { CircleMemberWithProfile } from '../../../src/features/auth/useCircleMembers';
 
 const inviteSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -90,7 +91,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* Members list */}
-        {members?.map((member) => (
+        {members?.map((member: CircleMemberWithProfile) => (
           <View key={member.id} style={styles.memberRow}>
             <View style={styles.memberAvatar}>
               <Text variant="bodySmall" color={colors.primary}>

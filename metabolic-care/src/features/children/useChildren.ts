@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import type { Child } from '../../lib/database.types';
+import type { Child, Json } from '../../lib/database.types';
 
 export function useChildren(careCircleId: string | undefined) {
   return useQuery({
@@ -40,7 +40,7 @@ interface CreateChildInput {
   date_of_birth: string;
   weight_kg?: number | null;
   sex?: 'male' | 'female' | 'other' | null;
-  conditions?: unknown[];
+  conditions?: Json;
   notes?: string | null;
 }
 
